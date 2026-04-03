@@ -78,10 +78,13 @@
     font-weight: bold;
     text-align: center;
     outline: none;
-    caret-color: #e94560;
     transition: border-color 0.2s;
+    -webkit-appearance: none;
+    -moz-appearance: textfield;
   }
   .digit-input:focus { border-color: #e94560; }
+  .digit-input::-webkit-credentials-auto-fill-button { display: none !important; }
+  .digit-input::-webkit-caps-lock-indicator { display: none !important; }
   .submit-btn {
     width: 100%;
     padding: 12px;
