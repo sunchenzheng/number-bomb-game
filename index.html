@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>数字炸弹</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #1a1a2e;
+    color: #fff;
+    font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px 16px 40px;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  .title {
+    font-size: 28px;
+    font-weight: bold;
+    color: #e94560;
+    text-align: center;
+    margin-bottom: 4px;
+    letter-spacing: 4px;
+  }
+  .subtitle {
+    font-size: 12px;
+    color: #6c757d;
+    text-align: center;
+    margin-bottom: 16px;
+  }
+
+  .info-bar {
+    width: 100%;
+    max-width: 420px;
+    background: #0f3460;
+    border-radius: 10px;
+    padding: 10px 16px;
+    text-align: center;
+    font-size: 16px;
+    font-weight: bold;
+    margin-bottom: 16px;
+  }
+
+  /* === 输入区 === */
+  .input-section {
+    width: 100%;
+    max-width: 420px;
+    background: #16213e;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 12px;
+  }
+  .input-label {
+    font-size: 13px;
+    color: #a0a0a0;
+    margin-bottom: 10px;
+  }
+  .input-row {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+  .digit-input {
+    width: 60px;
+    height: 64px;
+    background: #1a1a2e;
+    border: 2px solid #0f3460;
+    border-radius: 10px;
+    color: #00d9a5;
+    font-size: 28px;
+    font-weight: bold;
+    text-align: center;
+    outline: none;
+    caret-color: #e94560;
+    -webkit-text-security: disc;
+    transition: border-color 0.2s;
+  }
+  .digit-input:focus { border-color: #e94560; }
+  .submit-btn {
+    width: 100%;
+    padding: 12px;
+    background: #e94560;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    letter-spacing: 2px;
+  }
+  .submit-btn:active { background: #c73e54; }
+
+  /* === 记录栏 === */
+  .record-section {
+    width: 100%;
+    max-width: 420px;
+    background: #16213e;
+    border-radius: 12px;
+    padding: 14px 16px;
+    margin-bottom: 12px;
+  }
+  .section-title {
+    font-size: 13px;
+    color: #a0a0a0;
+    margin-bottom: 8px;
+  }
+  .lock-note {
+    font-size: 11px;
+    color: #6c757d;
+    margin-bottom: 8px;
+  }
+
+  /* 锁定格：触摸友好设计 */
+  .lock-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+  .lock-cell {
+    flex: 1;
+    height: 56px;
+    background: #0f3460;
+    border: 2px solid #2a4a6e;
+    border-radius: 8px;
+    position: relative;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+    overflow: hidden;
+  }
+  .lock-cell.locked {
+    border-color: #00d9a5;
+    background: #1a2a3e;
+  }
+  /* 占位提示 */
+  .lock-placeholder {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    color: #3a5a7a;
+    pointer-events: none;
+    z-index: 1;
+  }
+  .lock-cell.locked .lock-placeholder { display: none; }
+  /* 输入框 */
+  .lock-input {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    background: transparent;
+    border: none;
+    color: #00d9a5;
+    font-size: 26px;
+    font-weight: bold;
+    text-align: center;
+    outline: none;
+    caret-color: #e94560;
+    z-index: 2;
+    padding: 0;
+    -webkit-text-security: none;
+  }
+  .lock-cell.locked .lock-input {
+    color: #7fdbca;
+    pointer-events: none;
+  }
+  /* 锁定图标 */
+  .lock-icon {
+    position: absolute;
+    top: 3px;
+    right: 5px;
+    font-size: 11px;
+    z-index: 3;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+  .lock-cell.locked .lock-icon { opacity: 1; }
+
+  /* 投票格 */
+  .vote-note {
+    font-size: 11px;
+    color: #6c757d;
+    margin-bottom: 8px;
+  }
+  .vote-row {
+    display: flex;
+    gap: 6px;
+  }
+  .vote-cell {
+    flex: 1;
+    height: 44px;
+    background: #0f3460;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 15px;
+    font-weight: bold;
+    color: #fff;
+    cursor: pointer;
+    transition: background 0.15s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .vote-cell:active { transform: scale(0.95); }
+  .vote-cell.state-right { background: #00d9a5; color: #1a1a2e; }
+  .vote-cell.state-wrong { background: #ff4757; color: #fff; }
+
+  /* 历史记录 */
+  .history-section {
+    width: 100%;
+    max-width: 420px;
+    flex: 1;
+    overflow-y: auto;
+  }
+  .history-title {
+    font-size: 13px;
+    color: #6c757d;
+    margin-bottom: 8px;
+  }
+  .history-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .history-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: #16213e;
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 13px;
+  }
+  .history-round { color: #6c757d; white-space: nowrap; }
+  .history-digits {
+    font-family: "Consolas", monospace;
+    font-size: 16px;
+    font-weight: bold;
+    letter-spacing: 4px;
+    color: #fff;
+  }
+  .history-result { margin-left: auto; font-weight: bold; }
+  .result-4 { color: #00d9a5; }
+  .result-2 { color: #ffc107; }
+  .result-1 { color: #ff9800; }
+  .result-0 { color: #6c757d; }
+
+  /* 遮罩层 */
+  .overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.75);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+  }
+  .overlay.hidden { display: none; }
+  .modal {
+    background: #16213e;
+    border-radius: 16px;
+    padding: 30px 28px;
+    text-align: center;
+    max-width: 320px;
+    width: 90%;
+  }
+  .modal-emoji { font-size: 52px; margin-bottom: 10px; }
+  .modal-title { font-size: 26px; font-weight: bold; margin-bottom: 8px; }
+  .modal-title.win { color: #00d9a5; }
+  .modal-title.lose { color: #e94560; }
+  .modal-sub { color: #a0a0a0; font-size: 14px; margin-bottom: 6px; }
+  .modal-answer { color: #6c757d; font-size: 13px; margin-bottom: 18px; letter-spacing: 3px; }
+  .modal-btn {
+    padding: 11px 28px;
+    background: #e94560;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: bold;
+    cursor: pointer;
+    letter-spacing: 1px;
+  }
+  .modal-btn:active { background: #c73e54; }
+
+  /* 错误提示 */
+  .error-tip {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: #e94560;
+    color: #fff;
+    padding: 12px 28px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: bold;
+    z-index: 200;
+    display: none;
+  }
+</style>
+</head>
+<body>
+
+<div class="title">数字炸弹</div>
+<div class="subtitle">猜4位数 | 每位1-9 | 可重复 | 共20轮</div>
+
+<div class="info-bar" id="infoBar">第 1 轮 | 剩余 20 轮</div>
+
+<!-- 输入区 -->
+<div class="input-section">
+  <div class="input-label">输入你的4位猜测：</div>
+  <div class="input-row">
+    <input type="tel" class="digit-input" id="d0" maxlength="1" inputmode="numeric" autocomplete="off">
+    <input type="tel" class="digit-input" id="d1" maxlength="1" inputmode="numeric" autocomplete="off">
+    <input type="tel" class="digit-input" id="d2" maxlength="1" inputmode="numeric" autocomplete="off">
+    <input type="tel" class="digit-input" id="d3" maxlength="1" inputmode="numeric" autocomplete="off">
+  </div>
+  <button class="submit-btn" id="submitBtn">提交猜测</button>
+</div>
+
+<!-- 记录栏 -->
+<div class="record-section">
+  <div class="section-title">记录栏</div>
+
+  <!-- 第一行：4个锁定格 -->
+  <div class="lock-note">记录你认为正确的数字（锁定后点击解锁）</div>
+  <div class="lock-row" id="lockRow">
+    <div class="lock-cell" id="lc0" onclick="lockCellClick(0)">
+      <span class="lock-placeholder">—</span>
+      <input type="tel" id="li0" class="lock-input" maxlength="1" inputmode="numeric" autocomplete="off"
+             onclick="lockInputClick(0)"
+             oninput="lockInputChange(0)">
+      <span class="lock-icon">🔒</span>
+    </div>
+    <div class="lock-cell" id="lc1" onclick="lockCellClick(1)">
+      <span class="lock-placeholder">—</span>
+      <input type="tel" id="li1" class="lock-input" maxlength="1" inputmode="numeric" autocomplete="off"
+             onclick="lockInputClick(1)"
+             oninput="lockInputChange(1)">
+      <span class="lock-icon">🔒</span>
+    </div>
+    <div class="lock-cell" id="lc2" onclick="lockCellClick(2)">
+      <span class="lock-placeholder">—</span>
+      <input type="tel" id="li2" class="lock-input" maxlength="1" inputmode="numeric" autocomplete="off"
+             onclick="lockInputClick(2)"
+             oninput="lockInputChange(2)">
+      <span class="lock-icon">🔒</span>
+    </div>
+    <div class="lock-cell" id="lc3" onclick="lockCellClick(3)">
+      <span class="lock-placeholder">—</span>
+      <input type="tel" id="li3" class="lock-input" maxlength="1" inputmode="numeric" autocomplete="off"
+             onclick="lockInputClick(3)"
+             oninput="lockInputChange(3)">
+      <span class="lock-icon">🔒</span>
+    </div>
+  </div>
+
+  <!-- 第二行：1-9投票 -->
+  <div class="vote-note">点击标记（空白→绿色✓→红色✗→空白）</div>
+  <div class="vote-row" id="voteRow"></div>
+</div>
+
+<!-- 历史记录 -->
+<div class="history-section">
+  <div class="history-title">猜测记录</div>
+  <div class="history-list" id="historyList"></div>
+</div>
+
+<!-- 结果遮罩 -->
+<div class="overlay hidden" id="overlay">
+  <div class="modal">
+    <div class="modal-emoji" id="modalEmoji">🎉</div>
+    <div class="modal-title" id="modalTitle">胜利！</div>
+    <div class="modal-sub" id="modalSub">用了 3 轮猜出答案！</div>
+    <div class="modal-answer" id="modalAnswer">答案是：1234</div>
+    <button class="modal-btn" onclick="resetGame()">再来一局</button>
+  </div>
+</div>
+
+<!-- 错误提示 -->
+<div class="error-tip" id="errorTip"></div>
+
+<script>
+  // ====== 状态 ======
+  let answer = [];
+  let attempts = 0;
+  const MAX = 20;
+  let gameOver = false;
+  let history = [];
+  let lockStates = [false, false, false, false]; // true = 锁定
+  let voteStates = {};
+
+  // ====== 初始化 ======
+  function init() {
+    answer = Array.from({length: 4}, () => Math.floor(Math.random() * 9) + 1);
+    attempts = 0;
+    gameOver = false;
+    history = [];
+    lockStates = [false,false,false,false];
+    voteStates = {};
+    for (let n = 1; n <= 9; n++) voteStates[n] = "none";
+
+    document.getElementById("infoBar").textContent = "第 1 轮 | 剩余 20 轮";
+    document.getElementById("historyList").innerHTML = "";
+    document.getElementById("overlay").classList.add("hidden");
+
+    for (let i = 0; i < 4; i++) {
+      lockStates[i] = false;
+      document.getElementById("lc" + i).classList.remove("locked");
+      document.getElementById("li" + i).value = "";
+    }
+    buildVoteCells();
+    document.querySelectorAll(".digit-input")[0].focus();
+    console.log("[调试] 答案:", answer.join(""));
+  }
+
+  // ====== 判定 ======
+  function judge(ans, guess) {
+    return guess.filter((v, i) => v === ans[i]).length;
+  }
+
+  // ====== 提交 ======
+  function submit() {
+    if (gameOver) return;
+    const digits = Array.from(document.querySelectorAll(".digit-input")).map(inp => inp.value);
+    if (digits.some(d => d === "")) { showError("请输入4个数字！"); return; }
+    if (digits.some(d => !/[1-9]/.test(d))) { showError("每位必须是1-9！"); return; }
+
+    const guess = digits.map(Number);
+    const correct = judge(answer, guess);
+    attempts++;
+    history.push({ digits: guess.join(""), correct });
+    addHistoryItem(history.length, guess.join(""), correct);
+    document.getElementById("infoBar").textContent = `第 ${attempts} 轮 | 剩余 ${MAX - attempts} 轮`;
+
+    document.querySelectorAll(".digit-input").forEach(inp => inp.value = "");
+    document.querySelectorAll(".digit-input")[0].focus();
+
+    if (correct === 4) { gameOver = true; showModal(true, attempts); }
+    else if (attempts >= MAX) { gameOver = true; showModal(false); }
+  }
+
+  // ====== 历史记录 ======
+  function addHistoryItem(round, digits, correct) {
+    const list = document.getElementById("historyList");
+    const item = document.createElement("div");
+    item.className = "history-item";
+    const cls = correct === 4 ? "result-4" : correct >= 2 ? "result-2" : correct === 1 ? "result-1" : "result-0";
+    item.innerHTML = `
+      <span class="history-round">第${round}轮</span>
+      <span class="history-digits">${digits}</span>
+      <span class="history-result ${cls}">正确：${correct}</span>`;
+    list.appendChild(item);
+    list.scrollTop = list.scrollHeight;
+  }
+
+  // ====== 锁定格 — 触摸友好逻辑 ======
+  // 点击格子本体（解锁用）
+  function lockCellClick(idx) {
+    if (gameOver) return;
+    // 如果已锁定 → 解锁
+    if (lockStates[idx]) {
+      doUnlock(idx);
+    }
+    // 如果未锁定 → 聚焦输入框
+    // 注意：输入框的 onclick 会在这里之前触发，不要重复处理
+  }
+
+  // 点击输入框
+  function lockInputClick(idx) {
+    if (gameOver) return;
+    if (lockStates[idx]) {
+      // 已锁定 → 解锁（阻止冒泡）
+      doUnlock(idx);
+      // 阻止事件冒泡到格子，避免再次触发 lockCellClick
+      event.stopPropagation();
+    }
+    // 未锁定 → 什么都不做，让输入框获得焦点即可
+  }
+
+  // 输入框内容变化时自动锁定
+  function lockInputChange(idx) {
+    if (gameOver) return;
+    const inp = document.getElementById("li" + idx);
+    let val = inp.value;
+
+    // 只允许1-9
+    if (val && !/^[1-9]$/.test(val)) {
+      inp.value = "";
+      return;
+    }
+    inp.value = val;
+
+    // 有数字了 → 自动锁定
+    if (val && !lockStates[idx]) {
+      doLock(idx);
+    }
+  }
+
+  function doLock(idx) {
+    lockStates[idx] = true;
+    document.getElementById("lc" + idx).classList.add("locked");
+  }
+
+  function doUnlock(idx) {
+    lockStates[idx] = false;
+    document.getElementById("lc" + idx).classList.remove("locked");
+    document.getElementById("li" + idx).value = "";
+    // 聚焦输入框，方便继续输入
+    document.getElementById("li" + idx).focus();
+  }
+
+  // ====== 投票格 ======
+  function buildVoteCells() {
+    const row = document.getElementById("voteRow");
+    row.innerHTML = "";
+    for (let n = 1; n <= 9; n++) {
+      const cell = document.createElement("div");
+      cell.className = "vote-cell";
+      cell.id = "vc" + n;
+      cell.textContent = n;
+      cell.addEventListener("click", () => cycleVote(n));
+      row.appendChild(cell);
+    }
+    updateVoteCells();
+  }
+
+  function cycleVote(n) {
+    if (gameOver) return;
+    const s = voteStates[n];
+    voteStates[n] = s === "none" ? "right" : s === "right" ? "wrong" : "none";
+    updateVoteCells();
+  }
+
+  function updateVoteCells() {
+    for (let n = 1; n <= 9; n++) {
+      const cell = document.getElementById("vc" + n);
+      const s = voteStates[n];
+      cell.className = "vote-cell" + (s === "right" ? " state-right" : s === "wrong" ? " state-wrong" : "");
+      cell.textContent = s === "none" ? n : s === "right" ? n + " ✓" : n + " ✗";
+    }
+  }
+
+  // ====== 结果弹窗 ======
+  function showModal(won, rounds) {
+    document.getElementById("overlay").classList.remove("hidden");
+    document.getElementById("modalEmoji").textContent = won ? "🎉" : "💥";
+    const title = document.getElementById("modalTitle");
+    title.textContent = won ? "胜利！" : "游戏结束";
+    title.className = "modal-title " + (won ? "win" : "lose");
+    document.getElementById("modalSub").textContent =
+      won ? `用了 ${rounds} 轮猜出答案！` : "超过最大限制！";
+    document.getElementById("modalAnswer").textContent = `答案是：${answer.join("")}`;
+  }
+
+  // ====== 重置 ======
+  function resetGame() {
+    document.getElementById("overlay").classList.add("hidden");
+    for (let i = 0; i < 4; i++) {
+      lockStates[i] = false;
+      document.getElementById("lc" + i).classList.remove("locked");
+      document.getElementById("li" + i).value = "";
+    }
+    init();
+  }
+
+  // ====== 错误提示 ======
+  function showError(msg) {
+    const tip = document.getElementById("errorTip");
+    tip.textContent = msg;
+    tip.style.display = "block";
+    setTimeout(() => { tip.style.display = "none"; }, 1500);
+  }
+
+  // ====== 输入框交互 ======
+  function setupInputNavigation() {
+    const inputs = document.querySelectorAll(".digit-input");
+
+    inputs.forEach((inp, i) => {
+      inp.addEventListener("input", () => {
+        let val = inp.value;
+        if (!/^[1-9]$/.test(val)) { inp.value = ""; return; }
+        if (val && i < 3) {
+          inputs[i + 1].focus();
+          inputs[i + 1].value = "";
+          inputs[i + 1].setSelectionRange(1, 1);
+        }
+      });
+
+      inp.addEventListener("keydown", e => {
+        if (e.key === "Backspace" && !inp.value && i > 0) {
+          inp.value = "";
+          inputs[i - 1].focus();
+          inputs[i - 1].setSelectionRange(1, 1);
+          e.preventDefault();
+        }
+        if (e.key === "Enter") submit();
+      });
+
+      inp.addEventListener("focus", () => {
+        inp.setSelectionRange(1, 1);
+      });
+    });
+  }
+
+  // ====== 启动 ======
+  document.getElementById("submitBtn").addEventListener("click", submit);
+  setupInputNavigation();
+  init();
+</script>
+</body>
+</html>
